@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
+	width="440" height="320" paddingBottom="10" paddingLeft="10"
+	paddingTop="10" paddingRight="10" backgroundColor="white">
+
+	<mx:HTTPService id="forecastXML" useProxy="false"
+		method="POST" url="http://scalawgen.appspot.com/forecastXML" result="onResult(event)">
+		<mx:request>
+			<hemisphere>{hemisphere.text}</hemisphere>
+			<climate>{climate.text}</climate>
+			<terrain>{terrain.text}</terrain>
+			<dayOfMonth>{dayOfMonth.value}</dayOfMonth>
+			<month>{month.value}</month>
+			<days>{days.value}</days>
+			<system>{system.text}</system>
+		</mx:request>
+	</mx:HTTPService>
+
+	<mx:Script>
+        <![CDATA[
+        	import mx.controls.Alert;
+            import mx.collections.ArrayCollection;
+
+            [Bindable]
+            public var hemispheres:ArrayCollection = new ArrayCollection(
+                [
+                  {label:"Northern", data:1}, 
+                  {label:"Southern", data:2} 
+                ]);
+                  
+            [Bindable]
+            public var climates:ArrayCollection = new ArrayCollection(
+                [
+                  {label:"Arctic", data:1}, 
+                  {label:"Subarctic", data:2},
+                  {label:"Temperate", data:3}, 
+                  {label:"Subtropical", data:4},
+                  {label:"Tropical", data:5}                  
+                ]);
+                  
+            [Bindable]
+            public var terrains:ArrayCollection = new ArrayCollection(
+                [ 
+                  {label:"Desert", data:1}, 
+                  {label:"Forest", data:2},
+                  {label:"Hills", data:3},
+                  {label:"Mountains", data:4},
+                  {label:"Plains", data:5},
+                  {label:"Seacoast", data:6} 
+                ]);
+                
+            [Bindable]
+            public var unitsystems:ArrayCollection = new ArrayCollection(
+                [ 
+                  {label:"Imperial", data:1}, 
+                  {label:"Metric", data:2},                   
+                ]);
+            
+            private function submitForm(): void {
+            	btn_submit.enabled = false
+            	forecastXML.send();
+            }
+                
+			private function onResult(event:Event):void {
+				btn_submit.enabled = true
+				tab_forecast.enabled = true
+				tabs.selectedIndex = 1				
+				return;
+			}
+			
+			private function windText(wind: Object): String {
+				if ((wind.intensity == "0mph") || (wind.intensity == "0kmh")) {
+					return "Wind: none";
+				}
+				else {
+					return("Wind: from " + wind.direction + ", " + wind.intensity);
+				}
+			}
+				
+			private function precipitationText(precipitation: Object): String {
+				if (precipitation.amount == "None") {
+					return "Precipitation: none";
+				}
+				else {
+					return("Precipitation: " + precipitation.form + ", " + precipitation.amount);
+				}
+			}		
+        ]]>
+	</mx:Script>
+
+	<mx:TabNavigator id="tabs" width="100%" height="100%">
+
+		<mx:VBox id="tab_parameters" label="Parameters"
+			horizontalAlign="center" paddingTop="10">
+
+			<mx:Form width="100%" paddingTop="0">
+
+				<mx:FormItem label="Hemisphere">
+					<mx:ComboBox id="hemisphere" dataProvider="{hemispheres}"
+						width="150" />
+				</mx:FormItem>
+
+				<mx:FormItem label="Climate">
+					<mx:ComboBox id="climate" dataProvider="{climates}"
+						width="150" />
+				</mx:FormItem>
+
+				<mx:FormItem label="Terrain">
+					<mx:ComboBox id="terrain" dataProvider="{terrains}"
+						width="150" />
+				</mx:FormItem>
+
+				<mx:FormItem label="Starting on">
+					<mx:Grid verticalGap="10" horizontalGap="10">
+						<mx:GridRow>
+							<mx:GridItem>
+								<mx:Label text="day" />
+							</mx:GridItem>
+							<mx:GridItem>
+								<mx:NumericStepper id="dayOfMonth" minimum="1"
+									maximum="28" stepSize="1" value="1" width="65" />
+							</mx:GridItem>
+							<mx:GridItem>
+								<mx:Label text="of month" />
+							</mx:GridItem>
+							<mx:GridItem>
+								<mx:NumericStepper id="month" minimum="1"
+									maximum="12" stepSize="1" value="1" width="65" />
+							</mx:GridItem>
+						</mx:GridRow>
+					</mx:Grid>
+				</mx:FormItem>
+
+				<mx:FormItem label="Days">
+					<mx:NumericStepper id="days" minimum="1" maximum="336"
+						stepSize="1" value="100" width="65" />
+				</mx:FormItem>
+
+				<mx:FormItem label="Unit system">
+					<mx:ComboBox id="system" dataProvider="{unitsystems}"
+						width="150" />
+				</mx:FormItem>
+
+			</mx:Form>
+
+			<mx:Button id="btn_submit" label="Generate!" click="submitForm()" />
+
+		</mx:VBox>
+
+		<mx:VBox id="tab_forecast" label="Forecast" enabled="false" paddingTop="10" paddingLeft="10" paddingRight="10" paddingBottom="10">
+			<mx:Repeater id="rp" dataProvider="{forecastXML.lastResult.forecast.date}">
+				<mx:Label text="Month {rp.currentItem.month}, Day {rp.currentItem.dayOfMonth}" />
+				<mx:Label text="Temperature: down to {rp.currentItem.temperature.min} at night, up to {rp.currentItem.temperature.max} during the day" />
+				<mx:Label text="Humidity: {rp.currentItem.humidity.before} early, {rp.currentItem.humidity.before} late" />
+				<mx:Label text="{windText(rp.currentItem.wind)}" />
+				<mx:Label text="{precipitationText(rp.currentItem.precipitation)}" />
+				<mx:Repeater id="oerp" dataProvider="{rp.currentItem.effects.effect}">
+					<mx:Label text="{oerp.currentItem.name}" />
+				</mx:Repeater>
+				<mx:HRule width="100%" />
+			</mx:Repeater>
+		</mx:VBox>
+	</mx:TabNavigator>
+
+
+</mx:Application>

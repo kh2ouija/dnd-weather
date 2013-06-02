@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seasons>
+	<season name="Winter">
+		<normal>
+			<temperature values="cold"/>
+			<precipitation values="
+		</normal>
+	</season>
+</seasons>
